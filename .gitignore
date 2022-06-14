@@ -1,0 +1,5 @@
+*.o
+*.gch
+/.ccls-cache/
+/target
+/.vscode
