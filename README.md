@@ -1,4 +1,4 @@
-c_logs - Logging library implement by C
+c_logs - A logging library implement by C
 ---
 
 

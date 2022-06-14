@@ -44,6 +44,7 @@ struct log_sink_s {
     sstr_t filename_current;
     int log_file_total_limit;
     long log_file_total_bytes_limit;
+    int closed;
 };
 
 typedef struct log_sink_s log_sink_t;
@@ -119,13 +120,26 @@ int log_source_set_msg_vsprintf(log_source_t* source, const char* fmt,
     return 0;
 }
 
-static log_sink_t* sink() {
-    static log_sink_t sink_instance;
-    return &sink_instance;
-}
-
 #define LOG_DEST_STDOUT 0
 #define LOG_DEST_FILE 1
+
+static log_sink_t* sink() {
+    static log_sink_t sink_instance = {
+        LOG_LEVEL_TRACE,            // level
+        PTHREAD_MUTEX_INITIALIZER,  // mutex
+        LOG_DEST_STDOUT,            // log_dest
+        LOG_FILE_ROTATE_NONE,       // split_scheme
+        0,                          // prev_split_timestamp
+        NULL,                       // dir_path
+        1,                          // fd
+        NULL,                       // filename_prefix
+        NULL,                       // filename_current
+        0,                          // log_file_total_limit
+        0,                          // log_file_total_bytes_limit
+        0                           // closed
+    };
+    return &sink_instance;
+}
 
 static void log_sink_init(log_sink_t* sink) {
     sink->level = LOG_LEVEL_TRACE;
@@ -139,6 +153,7 @@ static void log_sink_init(log_sink_t* sink) {
     sink->filename_current = sstr("log_current");
     sink->log_file_total_limit = 10;
     sink->log_file_total_bytes_limit = 1024 * 1024 * 1024; /* 1Gi */
+    sink->closed = 0;
 }
 
 void log_sink_close(log_sink_t* sink) {
@@ -150,6 +165,7 @@ void log_sink_close(log_sink_t* sink) {
     sstr_free(sink->dir_path);
     sstr_free(sink->filename_prefix);
     sstr_free(sink->filename_current);
+    sink->closed = 1;
     pthread_mutex_unlock(&sink->mutex);
 }
 
@@ -301,7 +317,7 @@ static int log_sink_update(log_sink_t* sink) {
             }
         }
     }
-    if (open_new_file) {                
+    if (open_new_file) {
         pthread_mutex_lock(&sink->mutex);
         if (logfile_limit(sink) < 0) {
             pthread_mutex_unlock(&sink->mutex);
@@ -311,13 +327,13 @@ static int log_sink_update(log_sink_t* sink) {
         snprintf(new_file_path, sizeof(new_file_path), "%s/%s.%s",
                  sstr_cstr(sink->dir_path), sstr_cstr(sink->filename_prefix),
                  ts_buf);
-        int of = sink->fd;        
+        int of = sink->fd;
         sink->fd = open(new_file_path, O_WRONLY | O_APPEND | O_CREAT, 00755);
-        if (sink->fd < 0) {            
+        if (sink->fd < 0) {
             sink->fd = of;
             pthread_mutex_unlock(&sink->mutex);
             return -1;
-        } else {                        
+        } else {
             if (of > 1) {
                 close(of);
             }
@@ -343,7 +359,7 @@ int log_default_printf(const int level, const char* file, const int line,
                        const char* func, const char* fmt, ...) {
     va_list args;
     int r;
-    if (sink()->level > level) {
+    if (sink()->level > level || sink()->closed) {
         return 0;
     }
     log_source_t* s = log_source_new();

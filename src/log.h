@@ -1,6 +1,11 @@
 /**
  * @file log.h
- * @brief loging functions and macros
+ * @brief logging functions and macros
+ * @details This file contains the logging functions and macros,. All functions
+ * in this file are thread-safe. Use example:
+ * @code
+ * LOG_INFO("Hello world!");
+ * @endcode
  */
 
 #ifndef LOG_H_
@@ -32,11 +37,46 @@ extern "C" {
 #define LOG_FILE_ROTATE_HOURLY 1
 #define LOG_FILE_ROTATE_DAYLY 2
 
+/**
+ * @brief Initialize the logging system, call this function before using any
+ * other logging function, or just ignore it.
+ */
 void log_init();
+/**
+ * @brief Release all resouces allocated by the logging system, call this
+ * function when you are done using the logging system.
+ */
 void log_close();
 
+/**
+ * @brief set the log level, the default log level is LOG_LEVEL_TRACE.
+ * logsystem will only log messages with level equal or higher than the
+ * specified level.
+ *
+ * @param level the log level, see LOG_LEVEL_*
+ * @return int 0 on success, -1 on error
+ */
 int log_set_level(int level);
+/**
+ * @brief set the log level by string: "trace", "debug", "info", "warn",
+ * "error", "critical", "off".
+ *
+ * @param level the log level string
+ * @return int 0 on success, -1 on error
+ */
 int log_set_level_str(const char* level);
+
+/**
+ * @brief Set the output file for the logging system.
+ *
+ * @param path directory path of the log file
+ * @param filename  name prefix of the log file, the real file name will be
+ * filename_YYYY-MM-DD.log
+ * @param rotate the log file split scheme, see LOG_FILE_ROTATE_*
+ * @param file_size the max total size of the log files
+ * @param file_num the max number of the log file
+ * @return int
+ */
 int log_set_file(const char* path, const char* filename, int rotate,
                  long file_size, int file_num);
 
@@ -62,7 +102,7 @@ int log_default_printf(const int level, const char* file, const int line,
     log_default_printf(level, __FILENAME__, __LINE__, FUNC_NAME, __VA_ARGS__)
 
 /**
- * @brief print logs
+ * @brief Logging macros
  *
  * supported formats:
  *

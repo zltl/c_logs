@@ -25,3 +25,9 @@ export
 
 libclogs:
 	$(MAKE) -C $(ROOT_DIR)/src
+
+example: libclogs $(ROOT_DIR)/example/example.c
+	$(CC) $(CFLAGS) -o $(TARGET_DIR)/example $(ROOT_DIR)/example/example.c $(TARGET_DIR)/libclogs.a
+
+clean:
+	rm -rf $(ROOT_DIR)/target
