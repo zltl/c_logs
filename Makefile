@@ -15,7 +15,7 @@ ifneq ($(LOGS_DEBUG),)
 endif
 
 COMMON_FLAGS += -Wall -Wextra -Werror -ggdb -Wno-unused-result \
-	-I$(ROOT_DIR)/src $(DEBUG_FLAGS)
+	-I$(ROOT_DIR)/src $(DEBUG_FLAGS) $(SANITIZER_FLAGS)
 
 CFLAGS += -std=c11 $(COMMON_FLAGS)
 CXXFLAGS += -std=c++17 $(COMMON_FLAGS)

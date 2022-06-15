@@ -114,7 +114,7 @@ int log_default_printf(const int level, const char* file, const int line,
  *   - %[0][width][u][x|X]L      int64_t/uint64_t
  *   - %[0][width][.width]f      double, max valid number fits to %18.15f
  *   - %p                        void *
- *   - %S                        sstr_t
+ *   - %[x|X]S                   sstr_t, if x, print as hexadecimal
  *   - %s                        null-terminated string
  *   - %*s                       length and string
  *   - %Z                        '\0'
