@@ -1,3 +1,4 @@
+#define ROOT_DIR "example"
 #include "log.h"
 
 int main() {
